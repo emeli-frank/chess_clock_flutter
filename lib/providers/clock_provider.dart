@@ -7,7 +7,7 @@ class ClockProvider with ChangeNotifier {
   Duration playerOneTime = Duration(seconds: 1 * 60); // todo:: should be supplied dynamically
   Duration playerTwoTime = Duration(seconds: 1 * 60); // todo:: should be supplied dynamically
   int currentPlayerIndex = 1;
-  bool paused = true;
+  bool _paused = true;
   final Duration emitInterval = Duration(milliseconds: 1000);
 
   List<Player> players = [];
@@ -19,64 +19,63 @@ class ClockProvider with ChangeNotifier {
   }
 
   // a stream that emits current player every fixed millisecond.
-  Stream<int> ticker() async* {
+  Stream<Map<String, dynamic>> _ticker() async* {
     while (true) {
       await Future.delayed(emitInterval);
 
-      // exit loop if not player's turn
-      if (paused == true) {
+      // skip this iteration if time is paused
+      if (_paused == true) {
         continue;
       }
 
-      // break loop if any player's time has ran out
+      // break out of loop if any player's time has ran out
       if (players[0].timeLeft.inMilliseconds == 0 || players[1].timeLeft.inMilliseconds == 0) {
         break;
       }
 
-      yield currentPlayerIndex;
+      // remove time from player with turn
+      players[currentPlayerIndex].removeTime(emitInterval);
+
+      // emit player's remaining time
+      yield {
+        'playerIndex': currentPlayerIndex,
+        'timeLeft': players[currentPlayerIndex].getTimeLeft(),
+      };
     }
   }
 
+  // emit remaining time for player 1
   Stream<String> clock1() async* {
     const index = 0;
+    final tickerEvent = _ticker();
 
-    final t = ticker();
-
-    await for (final currentPlayerIndex in t) {
-      if (currentPlayerIndex == index) {
-        // remove time from player with turn
-        players[currentPlayerIndex].removeTime(emitInterval);
-
-        // emit player's remaining time
-        yield players[currentPlayerIndex].getTimeLeft();
+    await for (final event in tickerEvent) {
+      if (event['playerIndex'] == index) {
+        yield event['timeLeft'];
       }
     }
   }
 
+  // emit remaining time for player 2
   Stream<String> clock2() async* {
     const index = 1;
+    final tickerEvent = _ticker();
 
-    final t = ticker();
-
-    await for (final currentPlayerIndex in t) {
-      if (currentPlayerIndex == index) {
-        // remove time from player with turn
-        players[currentPlayerIndex].removeTime(emitInterval);
-
-        // emit player's remaining time
-        yield players[currentPlayerIndex].getTimeLeft();
+    await for (final event in tickerEvent) {
+      if (event['playerIndex'] == index) {
+        yield event['timeLeft'];
       }
     }
   }
 
   startTheOtherPlayerTime(index) {
-    paused = false;
+    _paused = false;
     currentPlayerIndex = (index + 1) % 2;
     notifyListeners();
   }
 
   pause() {
-    paused = true;
+    _paused = true;
   }
 }
 
