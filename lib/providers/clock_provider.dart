@@ -1,41 +1,42 @@
 import 'dart:async';
 
 import 'package:chess_clock/models/time_control.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 
 class ClockProvider with ChangeNotifier {
-  DateTime timeOut = DateTime(0, 0, 0, 0, 5, 0, 0, 0);
-  var playerOneTime = 5;
-  var playerTwoTime = 5;
-  var currentPlayerIndex = 0;
+  Duration playerOneTime = Duration(seconds: 1 * 60); // todo:: should be supplied dynamically
+  Duration playerTwoTime = Duration(seconds: 1 * 60); // todo:: should be supplied dynamically
+  int currentPlayerIndex = 1;
   bool paused = true;
+  final Duration emitInterval = Duration(milliseconds: 1000);
 
   List<Player> players = [];
   List<TimeControl> timeControls = [];
 
   ClockProvider() {
-    players.add(Player(timeLeft: Duration(seconds: 1 * 60)));
-    players.add(Player(timeLeft: Duration(seconds: 1 * 60)));
-  }
-
-  setPlayersTime(List<Duration> time) {
-    players[0].timeLeft = time[0];
-    players[1].timeLeft = time[1];
+    players.add(Player(timeLeft: playerOneTime));
+    players.add(Player(timeLeft: playerTwoTime));
   }
 
   Stream<String> clock1() async* {
     const index = 0;
     while (true) {
-      await Future.delayed(Duration(seconds: 1));
+      await Future.delayed(emitInterval);
+
+      // exit loop if not player's turn
       if (currentPlayerIndex != index || paused == true) {
         continue;
       }
-      players[index].removeASecond();
-      if (players[index].timeLeft.inMilliseconds % 1000 == 0) {
-        yield players[index].getTimeLeft();
-        if (players[index].timeLeft == Duration(hours: 0, minutes: 0, seconds: 0, milliseconds: 0)) {
-          break;
-        }
+
+      // remove time from player with turn
+      players[index].removeTime(emitInterval);
+
+      // emit player's remaining time
+      yield players[index].getTimeLeft();
+
+      // break loop if player's time has ran out
+      if (players[index].timeLeft.inMilliseconds == 0) {
+        break;
       }
     }
   }
@@ -43,16 +44,22 @@ class ClockProvider with ChangeNotifier {
   Stream<String> clock2() async* {
     const index = 1;
     while (true) {
-      await Future.delayed(Duration(seconds: 1));
+      await Future.delayed(emitInterval);
+
+      // exit loop if not player's turn
       if (currentPlayerIndex != index || paused == true) {
         continue;
       }
-      players[index].removeASecond();
-      if (players[index].timeLeft.inMilliseconds % 1000 == 0) {
-        yield players[index].getTimeLeft();
-        if (players[index].timeLeft == Duration(hours: 0, minutes: 0, seconds: 0, milliseconds: 0)) {
-          break;
-        }
+
+      // remove time from player with turn
+      players[index].removeTime(emitInterval);
+
+      // emit player's remaining time
+      yield players[index].getTimeLeft();
+
+      // break loop if player's time has ran out
+      if (players[index].timeLeft.inMilliseconds == 0) {
+        break;
       }
     }
   }
@@ -84,6 +91,7 @@ class Player {
     }
   }*/
 
+  // todo:: remove this method
   // subtracts time from this player
   removeASecond () {
     // todo:: convert to a method that removes a smaller amount of time say 1, 50 or 100ms
@@ -91,6 +99,15 @@ class Player {
     timeLeft = timeLeft - Duration(seconds: 1);
   }
 
+  removeTime(Duration d) {
+    if (d > timeLeft) {
+      d = timeLeft;
+    }
+
+    timeLeft = timeLeft - d;
+  }
+
+  // returns time as string in the format hh:mm:ss
   String getTimeLeft() {
     int hours = timeLeft.inHours;
     int minutes = timeLeft.inMinutes - hours * 60;
