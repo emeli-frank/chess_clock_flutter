@@ -18,48 +18,53 @@ class ClockProvider with ChangeNotifier {
     players.add(Player(timeLeft: playerTwoTime));
   }
 
-  Stream<String> clock1() async* {
-    const index = 0;
+  // a stream that emits current player every fixed millisecond.
+  Stream<int> ticker() async* {
     while (true) {
       await Future.delayed(emitInterval);
 
       // exit loop if not player's turn
-      if (currentPlayerIndex != index || paused == true) {
+      if (paused == true) {
         continue;
       }
 
-      // remove time from player with turn
-      players[index].removeTime(emitInterval);
-
-      // emit player's remaining time
-      yield players[index].getTimeLeft();
-
-      // break loop if player's time has ran out
-      if (players[index].timeLeft.inMilliseconds == 0) {
+      // break loop if any player's time has ran out
+      if (players[0].timeLeft.inMilliseconds == 0 || players[1].timeLeft.inMilliseconds == 0) {
         break;
+      }
+
+      yield currentPlayerIndex;
+    }
+  }
+
+  Stream<String> clock1() async* {
+    const index = 0;
+
+    final t = ticker();
+
+    await for (final currentPlayerIndex in t) {
+      if (currentPlayerIndex == index) {
+        // remove time from player with turn
+        players[currentPlayerIndex].removeTime(emitInterval);
+
+        // emit player's remaining time
+        yield players[currentPlayerIndex].getTimeLeft();
       }
     }
   }
 
   Stream<String> clock2() async* {
     const index = 1;
-    while (true) {
-      await Future.delayed(emitInterval);
 
-      // exit loop if not player's turn
-      if (currentPlayerIndex != index || paused == true) {
-        continue;
-      }
+    final t = ticker();
 
-      // remove time from player with turn
-      players[index].removeTime(emitInterval);
+    await for (final currentPlayerIndex in t) {
+      if (currentPlayerIndex == index) {
+        // remove time from player with turn
+        players[currentPlayerIndex].removeTime(emitInterval);
 
-      // emit player's remaining time
-      yield players[index].getTimeLeft();
-
-      // break loop if player's time has ran out
-      if (players[index].timeLeft.inMilliseconds == 0) {
-        break;
+        // emit player's remaining time
+        yield players[currentPlayerIndex].getTimeLeft();
       }
     }
   }
