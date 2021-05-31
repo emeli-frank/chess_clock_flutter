@@ -4,79 +4,91 @@ import 'package:chess_clock/models/time_control.dart';
 import 'package:flutter/foundation.dart';
 
 class ClockProvider with ChangeNotifier {
-  Duration playerOneTime = Duration(seconds: 1 * 60); // todo:: should be supplied dynamically
-  Duration playerTwoTime = Duration(seconds: 1 * 60); // todo:: should be supplied dynamically
+  Duration playerOneTime = Duration(seconds: 5 * 60); // todo:: should be supplied dynamically
+  Duration playerTwoTime = Duration(seconds: 5 * 60); // todo:: should be supplied dynamically
   int currentPlayerIndex = 1;
-  bool _paused = true;
-  final Duration emitInterval = Duration(milliseconds: 1000);
-
+  final Duration emitInterval = Duration(milliseconds: 100);
+  List<Timer> timers = [null, null];
+  List<StreamController<String>> controllers = [];
   List<Player> players = [];
   List<TimeControl> timeControls = [];
 
   ClockProvider() {
+    // init players
     players.add(Player(timeLeft: playerOneTime));
     players.add(Player(timeLeft: playerTwoTime));
+
+    // create stream controllers for each players
+    for (int i = 0; i < 2; i++) {
+      controllers.add(
+          StreamController<String>(
+            onPause: () { _stopTimer(i); },
+            onResume: () { _startTimer(i); },
+            onCancel: () { _stopTimer(i); },
+          )
+      );
+    }
   }
 
-  // a stream that emits current player every fixed millisecond.
-  Stream<Map<String, dynamic>> _ticker() async* {
-    while (true) {
-      await Future.delayed(emitInterval);
-
-      // skip this iteration if time is paused
-      if (_paused == true) {
-        continue;
-      }
-
-      // break out of loop if any player's time has ran out
+  /// starts time for player whose index was passed in and removed a fixed
+  /// amount of time at interval while emitting their remaining time until
+  /// the timer is cancelled
+  void _startTimer(int index) {
+    timers[index] = Timer.periodic(emitInterval, (_) {
       if (players[0].timeLeft.inMilliseconds == 0 || players[1].timeLeft.inMilliseconds == 0) {
-        break;
+        if (timers[index] != null) {
+          timers[index].cancel();
+        }
       }
 
       // remove time from player with turn
       players[currentPlayerIndex].removeTime(emitInterval);
 
-      // emit player's remaining time
-      yield {
-        'playerIndex': currentPlayerIndex,
-        'timeLeft': players[currentPlayerIndex].getTimeLeft(),
-      };
+      // emit time left for current player
+      controllers[currentPlayerIndex].add(players[currentPlayerIndex].getTimeLeft());
+    });
+  }
+
+  /// cancels and deletes timer for player whose index was passed in
+  void _stopTimer(int index) {
+    if (timers[index] != null) {
+      timers[index].cancel();
+      timers[index] = null;
     }
   }
 
   // emit remaining time for player 1
-  Stream<String> clock1() async* {
+  Stream<String> clock1() {
     const index = 0;
-    final tickerEvent = _ticker();
 
-    await for (final event in tickerEvent) {
-      if (event['playerIndex'] == index) {
-        yield event['timeLeft'];
-      }
-    }
+    return controllers[index].stream;
   }
 
   // emit remaining time for player 2
-  Stream<String> clock2() async* {
+  Stream<String> clock2() {
     const index = 1;
-    final tickerEvent = _ticker();
 
-    await for (final event in tickerEvent) {
-      if (event['playerIndex'] == index) {
-        yield event['timeLeft'];
-      }
-    }
+    return controllers[index].stream;
   }
 
   startTheOtherPlayerTime(index) {
-    _paused = false;
+    // stop current player's timer
+    _startTimer((index + 1) % 2);
+
+    // starts the other player's timer
+    _stopTimer(index);
+
+    // toggle turn
     currentPlayerIndex = (index + 1) % 2;
+
     notifyListeners();
   }
 
   pause() {
-    _paused = true;
+    _stopTimer(0);
+    _stopTimer(1);
   }
+
 }
 
 class Player {

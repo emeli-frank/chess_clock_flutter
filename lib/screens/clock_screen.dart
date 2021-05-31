@@ -42,49 +42,6 @@ class Clock extends StatelessWidget {
 
   Clock({@required this.playerIndex});
 
-  /*@override
-  Widget build(BuildContext context) {
-    var provider = Provider.of<ClockProvider>(context);
-
-    return StreamProvider<String>(
-      initialData: provider.players[playerIndex].getTimeLeft(),
-      create: (BuildContext context) {
-        return playerIndex == 0 ? provider.clock1() : provider.clock2();
-      },
-      child: Consumer<String>(
-        builder: (BuildContext context, String value, Widget child) {
-          return Container(
-            margin: EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
-            child: InkWell(
-              child: Container(
-                // margin: EdgeInsets.symmetric(horizontal: 10.0),
-                decoration: BoxDecoration(
-                    color: provider.currentPlayerIndex == playerIndex ? Color(0xFF20A09C) : Colors.transparent,
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(8.0),
-                      topRight: Radius.circular( 8.0),
-                      bottomLeft: Radius.circular(8.0),
-                      bottomRight: Radius.circular( 8.0),
-                    )
-                ),
-                child: Center(
-                  child: Text(
-                    value,
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 90.0
-                    ),
-                  ),
-                ),
-              ),
-              onTap: () => provider.startTheOtherPlayerTime(playerIndex),
-            ),
-          );
-        },
-      ),
-    );
-  }*/
-
   @override
   Widget build(BuildContext context) {
     var provider = Provider.of<ClockProvider>(context);
@@ -95,16 +52,12 @@ class Clock extends StatelessWidget {
         child: Container(
           // margin: EdgeInsets.symmetric(horizontal: 10.0),
           decoration: BoxDecoration(
-              color: provider.currentPlayerIndex == playerIndex ? Color(0xFF20A09C) : Colors.transparent,
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(8.0),
-                topRight: Radius.circular( 8.0),
-                bottomLeft: Radius.circular(8.0),
-                bottomRight: Radius.circular( 8.0),
-              )
+            color: provider.currentPlayerIndex == playerIndex ?
+                Color(0xFF20A09C) : Colors.transparent,
+            borderRadius: BorderRadius.circular(8.0),
           ),
           child: Center(
-            child: StreamProvider<String>(
+            child: StreamProvider<String>( // stream of time as string
               initialData: provider.players[playerIndex].getTimeLeft(),
               create: (BuildContext context) {
                 return playerIndex == 0 ? provider.clock1() : provider.clock2();
