@@ -1,5 +1,7 @@
 import 'package:chess_clock/models/time_control.dart';
 import 'package:chess_clock/providers/clock_provider.dart';
+import 'package:chess_clock/providers/time_control_provider.dart';
+import 'package:chess_clock/screens/time_control_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -8,26 +10,26 @@ class SettingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    var provider = Provider.of<ClockProvider>(context);
-    List<TimeControl> timeControls = provider.timeControls;
-    var tiles = List.generate(timeControls.length, (index) {
-      return ListTile(
-        leading: Icon(Icons.favorite),
-        title: Text('favorite'),
-      );
-    });
+    var provider = Provider.of<ClockProvider>(context, listen: false);
+    var timeControlProvider = Provider.of<TimeControlProvider>(context);
+    // List<TimeControl> timeControls = provider.timeControls;
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        textTheme: TextTheme(
-
-        ),
         title: Text('Settings'),
         actions: [
           IconButton(
-            icon: Icon(Icons.add),
-            onPressed: null,
+            icon: Icon(Icons.more_time),
+            onPressed: () async {
+              final timeControl = await Navigator.pushNamed(context, TimeControlScreen.routeName);
+              timeControlProvider.add(timeControl);
+            },
+          ),
+          IconButton(
+            icon: Icon(Icons.close),
+            onPressed: () {
+              timeControlProvider.clearAll();
+            },
           ),
           IconButton(
             icon: Icon(Icons.info_outline),
@@ -35,7 +37,109 @@ class SettingScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: ListView(),
+      body: Container(
+        padding: EdgeInsets.only(top: 16.0),
+        child: Column(
+          children: [
+            Expanded(
+              child: Consumer<TimeControlProvider>(
+                builder: (BuildContext context, TimeControlProvider model, Widget child) {
+                  return FutureBuilder<List<TimeControl>>(
+                    initialData: [],
+                    future: model.timeControls(),
+                    builder: (BuildContext context, AsyncSnapshot<List<TimeControl>>snapshot) {
+                      var timeControls = snapshot.data;
+                      return ListView.builder(
+                        scrollDirection: Axis.vertical,
+                        // shrinkWrap: true,
+                        itemCount: timeControls.length,
+                        itemBuilder: (BuildContext context, int index) {
+                          return _buildControlTile(
+                            name: timeControls[index].name,
+                            time: timeControls[index].duration,
+                            selected: false,
+                          );
+                          return ListTile(
+                            leading: Icon(Icons.favorite),
+                            title: Text(timeControls[index].name),
+                          );
+                        },
+                      );
+                    },
+                  );
+                },
+              ),
+              /*child: FutureProvider<List<TimeControl>>(
+                initialData: [],
+                create: (BuildContext context) => timeControlProvider.timeControls(),
+                // child: Text('hello'),
+                child: Consumer<List<TimeControl>>(
+                  builder: (BuildContext context, List<TimeControl> value, Widget child) {
+                    // print(value);
+                    // return Text('hello');
+                    return ListView.builder(
+                      scrollDirection: Axis.vertical,
+                      // shrinkWrap: true,
+                      itemCount: value.length,
+                      itemBuilder: (BuildContext context, int index) {
+                        return ListTile(
+                          leading: Icon(Icons.favorite),
+                          title: Text(value[index].duration.toString()),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),*/
+            ),
+          ],
+        ),
+      ),
     );
+  }
+
+  _buildControlTile({@required String name, @required Duration time, @required bool selected}) {
+    return Container(
+      padding: EdgeInsets.symmetric(vertical: 16.0, horizontal: 16.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            child: Radio<bool>(
+              value: selected,
+              groupValue: true,
+              onChanged: (_) {},
+            ),
+          ),
+          Container(
+            padding: EdgeInsets.only(left: 24.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  style: TextStyle(
+                    fontSize: 16.0,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                SizedBox(height: 8.0,),
+                Text(
+                  'hh:mm:ss',
+                  style: TextStyle(
+                    fontSize: 14.0,
+                    color: Colors.black45,
+                  ),
+                ),
+              ],
+            ),
+          )
+        ],
+      ),
+    );
+  }
+
+  void _openTimeControlDialog(BuildContext context) {
+    showDialog(context: context, builder: (context) => TimeControlScreen());
   }
 }

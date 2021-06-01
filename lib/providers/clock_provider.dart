@@ -4,14 +4,14 @@ import 'package:chess_clock/models/time_control.dart';
 import 'package:flutter/foundation.dart';
 
 class ClockProvider with ChangeNotifier {
-  Duration playerOneTime = Duration(seconds: 5 * 60); // todo:: should be supplied dynamically
-  Duration playerTwoTime = Duration(seconds: 5 * 60); // todo:: should be supplied dynamically
-  int currentPlayerIndex = 1;
+  final Duration playerOneTime = Duration(seconds: 5 * 60); // todo:: should be supplied dynamically
+  final Duration playerTwoTime = Duration(seconds: 5 * 60); // todo:: should be supplied dynamically
   final Duration emitInterval = Duration(milliseconds: 100);
-  List<Timer> timers = [null, null];
-  List<StreamController<String>> controllers = [];
-  List<Player> players = [];
-  List<TimeControl> timeControls = [];
+  final List<Timer> timers = [null, null];
+  final List<StreamController<String>> controllers = [];
+  final List<Player> players = [];
+  final List<TimeControl> timeControls = [];
+  int currentPlayerIndex = 1;
 
   ClockProvider() {
     // init players
