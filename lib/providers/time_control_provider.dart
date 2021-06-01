@@ -6,12 +6,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class TimeControlProvider with ChangeNotifier {
   Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
+  int _selectedIndex;
 
   TimeControlProvider();
 
   clearAll() async {
     final SharedPreferences prefs = await _prefs;
 
+    this._selectedIndex = null;
     prefs.clear();
     notifyListeners();
   }
@@ -25,6 +27,22 @@ class TimeControlProvider with ChangeNotifier {
     strs = _controlsToString(controls);
 
     prefs.setStringList('controls', strs);
+
+    notifyListeners();
+  }
+
+  delete(int index) async {
+    final SharedPreferences prefs = await _prefs;
+
+    final controls = await timeControls();
+    try {
+      controls.removeAt(index);
+    } catch (e) {
+      // do nothing for now
+    }
+
+    final controlStrs = _controlsToString(controls);
+    prefs.setStringList('controls', controlStrs);
 
     notifyListeners();
   }

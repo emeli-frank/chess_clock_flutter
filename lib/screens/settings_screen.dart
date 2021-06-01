@@ -1,8 +1,8 @@
 import 'package:chess_clock/models/time_control.dart';
-import 'package:chess_clock/providers/clock_provider.dart';
 import 'package:chess_clock/providers/time_control_provider.dart';
 import 'package:chess_clock/screens/time_control_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:provider/provider.dart';
 
 class SettingScreen extends StatelessWidget {
@@ -10,9 +10,7 @@ class SettingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    var provider = Provider.of<ClockProvider>(context, listen: false);
     var timeControlProvider = Provider.of<TimeControlProvider>(context);
-    // List<TimeControl> timeControls = provider.timeControls;
 
     return Scaffold(
       appBar: AppBar(
@@ -51,17 +49,38 @@ class SettingScreen extends StatelessWidget {
                       var timeControls = snapshot.data;
                       return ListView.builder(
                         scrollDirection: Axis.vertical,
-                        // shrinkWrap: true,
                         itemCount: timeControls.length,
                         itemBuilder: (BuildContext context, int index) {
-                          return _buildControlTile(
-                            name: timeControls[index].name,
-                            time: timeControls[index].duration,
-                            selected: false,
-                          );
-                          return ListTile(
-                            leading: Icon(Icons.favorite),
-                            title: Text(timeControls[index].name),
+                          return Slidable(
+                            actionPane: SlidableScrollActionPane(),
+                            actionExtentRatio: 0.18,
+                            actions: [
+                              IconSlideAction(
+                                iconWidget: Icon(
+                                  Icons.edit,
+                                  color: Colors.black87,
+                                ),
+                                onTap: () => null,
+                              ),
+                              IconSlideAction(
+                                color: Colors.red.shade50,
+                                iconWidget: Icon(
+                                  Icons.delete,
+                                  color: Colors.red,
+                                ),
+                                onTap: () {
+                                  timeControlProvider.delete(index);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Time control deleted')),
+                                  );
+                                },
+                              )
+                            ],
+                            child: _buildControlTile(
+                              name: timeControls[index].name,
+                              time: timeControls[index].duration,
+                              selected: false,
+                            ),
                           );
                         },
                       );
@@ -69,28 +88,6 @@ class SettingScreen extends StatelessWidget {
                   );
                 },
               ),
-              /*child: FutureProvider<List<TimeControl>>(
-                initialData: [],
-                create: (BuildContext context) => timeControlProvider.timeControls(),
-                // child: Text('hello'),
-                child: Consumer<List<TimeControl>>(
-                  builder: (BuildContext context, List<TimeControl> value, Widget child) {
-                    // print(value);
-                    // return Text('hello');
-                    return ListView.builder(
-                      scrollDirection: Axis.vertical,
-                      // shrinkWrap: true,
-                      itemCount: value.length,
-                      itemBuilder: (BuildContext context, int index) {
-                        return ListTile(
-                          leading: Icon(Icons.favorite),
-                          title: Text(value[index].duration.toString()),
-                        );
-                      },
-                    );
-                  },
-                ),
-              ),*/
             ),
           ],
         ),
@@ -98,7 +95,7 @@ class SettingScreen extends StatelessWidget {
     );
   }
 
-  _buildControlTile({@required String name, @required Duration time, @required bool selected}) {
+  Widget _buildControlTile({@required String name, @required Duration time, @required bool selected}) {
     return Container(
       padding: EdgeInsets.symmetric(vertical: 16.0, horizontal: 16.0),
       child: Row(
@@ -139,7 +136,4 @@ class SettingScreen extends StatelessWidget {
     );
   }
 
-  void _openTimeControlDialog(BuildContext context) {
-    showDialog(context: context, builder: (context) => TimeControlScreen());
-  }
 }
