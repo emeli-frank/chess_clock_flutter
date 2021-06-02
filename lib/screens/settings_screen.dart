@@ -10,7 +10,7 @@ class SettingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    var timeControlProvider = Provider.of<TimeControlProvider>(context);
+    var timeControlProvider = Provider.of<TimeControlProvider>(context, listen: false);
 
     return Scaffold(
       appBar: AppBar(
@@ -20,13 +20,9 @@ class SettingScreen extends StatelessWidget {
             icon: Icon(Icons.more_time),
             onPressed: () async {
               final timeControl = await Navigator.pushNamed(context, TimeControlScreen.routeName);
-              timeControlProvider.add(timeControl);
-            },
-          ),
-          IconButton(
-            icon: Icon(Icons.close),
-            onPressed: () {
-              timeControlProvider.clearAll();
+              if (timeControl != null) {
+                timeControlProvider.add(timeControl);
+              }
             },
           ),
           IconButton(
@@ -43,50 +39,107 @@ class SettingScreen extends StatelessWidget {
               child: Consumer<TimeControlProvider>(
                 builder: (BuildContext context, TimeControlProvider model, Widget child) {
                   return FutureBuilder<List<TimeControl>>(
-                    initialData: [],
+                    initialData: null,
                     future: model.timeControls(),
                     builder: (BuildContext context, AsyncSnapshot<List<TimeControl>>snapshot) {
-                      var timeControls = snapshot.data;
-                      return ListView.builder(
-                        scrollDirection: Axis.vertical,
-                        itemCount: timeControls.length,
-                        itemBuilder: (BuildContext context, int index) {
-                          return Slidable(
-                            actionPane: SlidableScrollActionPane(),
-                            actionExtentRatio: 0.18,
-                            actions: [
-                              IconSlideAction(
-                                iconWidget: Icon(
-                                  Icons.edit,
-                                  color: Colors.black87,
-                                ),
-                                onTap: () => null,
-                              ),
-                              IconSlideAction(
-                                color: Colors.red.shade50,
-                                iconWidget: Icon(
-                                  Icons.delete,
-                                  color: Colors.red,
-                                ),
-                                onTap: () {
-                                  timeControlProvider.delete(index);
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('Time control deleted')),
-                                  );
-                                },
-                              )
-                            ],
-                            child: _buildControlTile(
-                              name: timeControls[index].name,
-                              time: timeControls[index].duration,
-                              selected: false,
-                            ),
+                      if (snapshot.hasData) {
+                        final timeControls = snapshot.data;
+
+                        if (timeControls.length < 1) {
+                          timeControlProvider.createDefaultTimeControls();
+                          print('array: $timeControls, loading default control');
+                          return Center(
+                            child: Text('data length is zero'),
+                            // child: CircularProgressIndicator(),
                           );
-                        },
+                        }
+
+                        return ListView.separated(
+                          scrollDirection: Axis.vertical,
+                          itemCount: timeControls.length,
+                          itemBuilder: (BuildContext context, int index) {
+                            return InkWell(
+                              onTap: () { timeControlProvider.select(index); },
+                              child: Slidable(
+                                actionPane: SlidableScrollActionPane(),
+                                actionExtentRatio: 0.18,
+                                actions: [
+                                  IconSlideAction(
+                                    color: Colors.transparent,
+                                    iconWidget: Icon(
+                                      Icons.edit,
+                                      color: Colors.black87,
+                                    ),
+                                    onTap: () async {
+                                      final timeControl = await Navigator.pushNamed(
+                                        context,
+                                        TimeControlScreen.routeName,
+                                        arguments: {"control": timeControls[index]},
+                                      );
+                                      if (timeControl != null) {
+                                        timeControlProvider.update(index, timeControl);
+                                      }
+                                    },
+                                  ),
+                                  IconSlideAction(
+                                    color: Colors.red.shade50,
+                                    iconWidget: Icon(
+                                      Icons.delete,
+                                      color: Colors.red,
+                                    ),
+                                    onTap: () {
+                                      timeControlProvider.delete(index);
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(content: Text('Time control deleted')),
+                                      );
+                                    },
+                                  )
+                                ],
+                                child: _buildControlTile(
+                                  context: context,
+                                  name: timeControls[index].name,
+                                  time: timeControls[index].asFormattedString,
+                                  selected: index == timeControlProvider.selectedIndex,
+                                  isLastChild: index == timeControls.length,
+                                ),
+                              ),
+                            );
+                          },
+                          separatorBuilder: (context, index) {
+                            return Container(
+                              height: 1.0,
+                              color: Colors.black12,
+                              margin: EdgeInsets.only(left: 60.0, right: 24.0),
+                            );
+                          },
+                        );
+                      }
+
+                      return Center(
+                        child: CircularProgressIndicator(),
                       );
                     },
                   );
                 },
+              ),
+            ),
+            Expanded(
+              flex: 0,
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 16.0),
+                margin: EdgeInsets.only(bottom: 16.0),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: MaterialButton(
+                    color: Theme.of(context).primaryColor,
+                    textColor: Colors.white,
+                    onPressed: () {},
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(5.0),
+                    ),
+                    child: Text('Start'),
+                  ),
+                ),
               ),
             ),
           ],
@@ -95,40 +148,50 @@ class SettingScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildControlTile({@required String name, @required Duration time, @required bool selected}) {
+  Widget _buildControlTile({
+    @required BuildContext context,
+    @required String name,
+    @required String time,
+    @required bool selected,
+    @required bool isLastChild}) {
     return Container(
       padding: EdgeInsets.symmetric(vertical: 16.0, horizontal: 16.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            child: Radio<bool>(
-              value: selected,
-              groupValue: true,
-              onChanged: (_) {},
+            child: Center(
+              child: Radio<bool>(
+                value: selected,
+                groupValue: true,
+                activeColor: Theme.of(context).accentColor,
+                onChanged: (_) {},
+              ),
             ),
           ),
-          Container(
-            padding: EdgeInsets.only(left: 24.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  name,
-                  style: TextStyle(
-                    fontSize: 16.0,
-                    fontWeight: FontWeight.w500,
+          Expanded(
+            child: Container(
+              margin: EdgeInsets.only(left: 24.0, right: 16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    name,
+                    style: TextStyle(
+                      fontSize: 16.0,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
-                ),
-                SizedBox(height: 8.0,),
-                Text(
-                  'hh:mm:ss',
-                  style: TextStyle(
-                    fontSize: 14.0,
-                    color: Colors.black45,
+                  SizedBox(height: 8.0,),
+                  Text(
+                    time,
+                    style: TextStyle(
+                      fontSize: 14.0,
+                      color: Colors.black45,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           )
         ],

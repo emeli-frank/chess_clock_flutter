@@ -11,16 +11,24 @@ class TimeControlScreen extends StatefulWidget {
 }
 
 class _TimeControlScreenState extends State<TimeControlScreen> {
-  final nameController = TextEditingController();
+  final nameTextController = TextEditingController();
 
   @override
   void dispose() {
-    nameController.dispose();
+    nameTextController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    TimeControl timeControl;
+    final  Map<String, Object>data = ModalRoute.of(context).settings.arguments;
+    
+    if (data != null) {
+      timeControl = data['control'] as TimeControl;
+      nameTextController.text = timeControl.name;
+    }
+    
     return Scaffold(
       appBar: AppBar(
         title: Text('Time control'),
@@ -35,16 +43,16 @@ class _TimeControlScreenState extends State<TimeControlScreen> {
                 labelText: 'Time control name',
                 helperText: 'E.g. Rapid | 10min',
               ),
-              controller: nameController,
+              controller: nameTextController,
             ),
             SizedBox(height: 72.0,),
             MaterialButton(
-              child: Text('Create'),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+              child: Text(timeControl == null ? 'Create' : 'Update'),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5.0)),
               color: Theme.of(context).primaryColor,
               textColor: Colors.white,
               onPressed: () {
-                TimeControl timeControl = TimeControl(name: nameController.text, duration: Duration(seconds: 60));
+                timeControl = TimeControl(name: nameTextController.text, duration: Duration(seconds: 60));
                 Navigator.pop(context, timeControl);
               },
             ),

@@ -22,16 +22,20 @@ class MyApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         // title: 'Chess clock',
         theme: ThemeData.light().copyWith(
-          primaryColor: Colors.lightBlue[800],
-          accentColor: Colors.cyan[600],
+          // primaryColor: Color(0xFF20A09C),
+          primaryColor: Colors.cyan[800],
+          accentColor: Colors.orange[900],
           appBarTheme: AppBarTheme(
-            color: Colors.white,
-            iconTheme: IconThemeData(
-              color: Colors.grey,
-            ),
+            brightness: Brightness.light,
+            backgroundColor: Colors.white,
+            foregroundColor: Colors.black87,
             titleTextStyle: TextStyle(
-              color: Colors.black54,
+              color: Colors.black87,
             ),
+            textTheme: Theme.of(context).textTheme.copyWith(
+              headline6: Theme.of(context).textTheme.headline6.copyWith(fontSize: 20.0),
+            ),
+            iconTheme: Theme.of(context).iconTheme,
           ),
           buttonTheme: ButtonThemeData(
             padding: EdgeInsets.symmetric(vertical: 24.0, horizontal: 24.0),

@@ -6,17 +6,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class TimeControlProvider with ChangeNotifier {
   Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
-  int _selectedIndex;
+  int selectedIndex;
 
   TimeControlProvider();
-
-  clearAll() async {
-    final SharedPreferences prefs = await _prefs;
-
-    this._selectedIndex = null;
-    prefs.clear();
-    notifyListeners();
-  }
 
   Future<void> add(TimeControl control) async {
     final SharedPreferences prefs = await _prefs;
@@ -26,7 +18,26 @@ class TimeControlProvider with ChangeNotifier {
     controls.add(control);
     strs = _controlsToString(controls);
 
-    prefs.setStringList('controls', strs);
+    await prefs.setStringList('controls', strs);
+
+    notifyListeners();
+  }
+
+  Future<void> update(int index, TimeControl control) async {
+    final SharedPreferences prefs = await _prefs;
+
+    List<String> strs = prefs.getStringList('controls');
+    List<TimeControl> controls = _strToControl(strs);
+
+    try {
+      controls[index] = control;
+    } catch (e) {
+      throw e;
+    }
+
+    strs = _controlsToString(controls);
+
+    await prefs.setStringList('controls', strs);
 
     notifyListeners();
   }
@@ -38,7 +49,7 @@ class TimeControlProvider with ChangeNotifier {
     try {
       controls.removeAt(index);
     } catch (e) {
-      // do nothing for now
+      throw e;
     }
 
     final controlStrs = _controlsToString(controls);
@@ -50,9 +61,18 @@ class TimeControlProvider with ChangeNotifier {
   Future<List<TimeControl>> timeControls() async {
     final SharedPreferences prefs = await _prefs;
 
-    List<String> strs = prefs.getStringList('controls');
+    final strs = prefs.getStringList('controls');
+    final controls = _strToControl(strs);
 
-    return _strToControl(strs);
+    // create default control if it is empty
+    /*if (controls.length < 1) {
+      await createDefaultTimeControls();
+
+      // call this method recursively
+      return await timeControls();
+    }*/
+
+    return controls;
   }
 
   List<TimeControl> _strToControl(List<String> jsonStrs) {
@@ -88,4 +108,22 @@ class TimeControlProvider with ChangeNotifier {
 
     return strs;
   }
+
+  select(int index) async {
+    final controls = await timeControls();
+    if (index > controls.length - 1) {
+      return;
+    }
+
+    selectedIndex = index;
+    notifyListeners();
+  }
+
+  /// used to create default control when all controls have been deleted
+  createDefaultTimeControls() async {
+    await add(defaultTimeControl);
+  }
 }
+
+// todo:: move to somewhere else
+TimeControl defaultTimeControl = TimeControl(name: 'Rapid | 10min', duration: Duration(minutes: 10));

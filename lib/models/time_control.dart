@@ -5,6 +5,23 @@ class TimeControl {
   final Duration duration;
   // final Duration increment;
 
+  String get asFormattedString {
+    int hours = duration.inHours;
+    int minutes = duration.inMinutes - hours * 60;
+    int seconds = duration.inSeconds - minutes * 60;
+
+    String timeAsString = "";
+
+    if (hours > 0) {
+      timeAsString += "$hours :";
+    }
+
+    timeAsString += "$minutes : ";
+    timeAsString += "$seconds".padLeft(2, '0');
+
+    return timeAsString;
+  }
+
   TimeControl({@required this.name, @required this.duration/*, @required this.increment*/});
 
   /*factory TimeControl.fromJson(Map<String, dynamic> data) {

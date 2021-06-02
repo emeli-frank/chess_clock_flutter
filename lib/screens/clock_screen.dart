@@ -53,7 +53,7 @@ class Clock extends StatelessWidget {
           // margin: EdgeInsets.symmetric(horizontal: 10.0),
           decoration: BoxDecoration(
             color: provider.currentPlayerIndex == playerIndex ?
-                Color(0xFF20A09C) : Colors.transparent,
+            Colors.cyan[800] : Colors.transparent,
             borderRadius: BorderRadius.circular(8.0),
           ),
           child: Center(
@@ -119,6 +119,7 @@ class ClockActions extends StatelessWidget {
               color: Colors.white,
             ),
             onPressed: () {
+              provider.pause();
               Navigator.pushNamed(context, SettingScreen.routeName);
             },
           ),
