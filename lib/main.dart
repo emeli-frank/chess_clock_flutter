@@ -12,11 +12,13 @@ void main() => runApp(MyApp());
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final timeControl = TimeControlProvider();
+    final clock = ClockProvider(timeControl);
 
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider<ClockProvider>(create: (_) => ClockProvider()),
-        ChangeNotifierProvider<TimeControlProvider>(create: (_) => TimeControlProvider()),
+        ChangeNotifierProvider<ClockProvider>(create: (_) => clock),
+        ChangeNotifierProvider<TimeControlProvider>(create: (_) => timeControl),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
@@ -42,7 +44,6 @@ class MyApp extends StatelessWidget {
           ),
         ),
         initialRoute: ClockScreen.routeName,
-        // initialRoute: TimeControlScreen.routeName,
         routes: {
           ClockScreen.routeName: (context) => ClockScreen(),
           SettingScreen.routeName: (context) => SettingScreen(),

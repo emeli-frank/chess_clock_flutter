@@ -93,14 +93,20 @@ class SettingScreen extends StatelessWidget {
                                         SnackBar(content: Text('Time control deleted')),
                                       );
                                     },
-                                  )
+                                  ),
                                 ],
-                                child: _buildControlTile(
-                                  context: context,
-                                  name: timeControls[index].name,
-                                  time: timeControls[index].asFormattedString,
-                                  selected: index == timeControlProvider.selectedIndex,
-                                  isLastChild: index == timeControls.length,
+                                child: FutureBuilder<int>(
+                                  initialData: null,
+                                  future: timeControlProvider.selectedIndex,
+                                  builder: (BuildContext context, AsyncSnapshot snapshot) {
+                                    return _buildControlTile(
+                                      context: context,
+                                      name: timeControls[index].name,
+                                      time: timeControls[index].asFormattedString,
+                                      selected: index == snapshot.data,
+                                      isLastChild: index == timeControls.length,
+                                    );
+                                  },
                                 ),
                               ),
                             );

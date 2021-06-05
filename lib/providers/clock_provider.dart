@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:chess_clock/models/time_control.dart';
+import 'package:chess_clock/providers/time_control_provider.dart';
 import 'package:flutter/foundation.dart';
 
 class ClockProvider with ChangeNotifier {
@@ -10,14 +11,13 @@ class ClockProvider with ChangeNotifier {
   final List<Timer> timers = [null, null];
   final List<StreamController<String>> controllers = [];
   final List<Player> players = [];
-  final List<TimeControl> timeControls = [];
+  // final List<TimeControl> timeControls = [];
+  final TimeControlProvider timeControlProvider;
   int currentPlayerIndex = 1;
 
-  ClockProvider() {
-    // init players
-    players.add(Player(timeLeft: playerOneTime));
-    players.add(Player(timeLeft: playerTwoTime));
+  bool get isPaused => timers[0] == null && timers[1] == null;
 
+  ClockProvider(this.timeControlProvider) {
     // create stream controllers for each players
     for (int i = 0; i < 2; i++) {
       controllers.add(
@@ -27,7 +27,25 @@ class ClockProvider with ChangeNotifier {
             onCancel: () { _stopTimer(i); },
           )
       );
+
+      // emit initial output string
+      (int index) {
+        timeControlProvider.selected.then((control) {
+          controllers[index].add(control.asFormattedString);
+        });
+      }(controllers.length - 1);
     }
+
+    // players.add(Player(timeLeft: playerOneTime));
+    // players.add(Player(timeLeft: playerTwoTime));
+
+    initClocks(TimeControl(name: '', duration: Duration(minutes: 5)));
+  }
+
+  Future<void> initClocks(TimeControl control) async {
+    final timeControl = await timeControlProvider.selected;
+    players.add(Player(timeLeft: timeControl.duration));
+    players.add(Player(timeLeft: timeControl.duration));
   }
 
   /// starts time for player whose index was passed in and removed a fixed
@@ -87,6 +105,14 @@ class ClockProvider with ChangeNotifier {
   pause() {
     _stopTimer(0);
     _stopTimer(1);
+
+    // Notifying listeners here may seem wasteful but it is not.
+    // it helps the clock buttons disable or enable themselves under certain
+    // conditions.
+    // When the timer is paused, if it does not trigger a clock button
+    // UI update a clock which do not have turn may not be clickable event though
+    // it should and can be used to restart opponent's time.
+    notifyListeners();
   }
 
 }

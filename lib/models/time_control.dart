@@ -35,15 +35,6 @@ class TimeControl {
   TimeControl.fromJson(Map<String, dynamic> json):
       name = json['name'],
       duration = _durationFromMap(json['duration']);
-
-  /*fromJson(Map<String, dynamic> data) {
-    print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
-    return TimeControl(
-      name: data['name'],
-      duration: data['duration'],
-      // increment: data['increment']
-    );
-  }*/
   
   _durationToMap(Duration d) {
     var timeMap = Map<String, int>();

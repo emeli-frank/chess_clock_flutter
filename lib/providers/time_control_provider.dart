@@ -6,7 +6,20 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class TimeControlProvider with ChangeNotifier {
   Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
-  int selectedIndex;
+  // int selectedIndex;
+
+  Future<int> get selectedIndex async {
+    final SharedPreferences prefs = await _prefs;
+
+    return prefs.getInt('selectedControlIndex');
+  }
+
+  Future<TimeControl> get selected async {
+    final SharedPreferences prefs = await _prefs;
+
+    final controls = await timeControls();
+    return controls[await selectedIndex];
+  }
 
   TimeControlProvider();
 
@@ -75,7 +88,7 @@ class TimeControlProvider with ChangeNotifier {
     return controls;
   }
 
-  List<TimeControl> _strToControl(List<String> jsonStrs) {
+  static List<TimeControl> _strToControl(List<String> jsonStrs) {
     List<TimeControl> controls = [];
 
     if (jsonStrs == null) {
@@ -99,7 +112,7 @@ class TimeControlProvider with ChangeNotifier {
     return controls;
   }
 
-  List<String> _controlsToString(List<TimeControl> controls) {
+  static List<String> _controlsToString(List<TimeControl> controls) {
     List<String> strs = [];
 
     for (int i = 0; i < controls.length; i++) {
@@ -109,19 +122,24 @@ class TimeControlProvider with ChangeNotifier {
     return strs;
   }
 
-  select(int index) async {
-    final controls = await timeControls();
+  Future<void> select(int index) async {
+    final SharedPreferences prefs = await _prefs;
+    
+    /*final controls = await timeControls();
     if (index > controls.length - 1) {
       return;
-    }
+    }*/
 
-    selectedIndex = index;
+    // selectedIndex = index;
+    prefs.setInt('selectedControlIndex', index);
+    
     notifyListeners();
   }
 
   /// used to create default control when all controls have been deleted
   createDefaultTimeControls() async {
     await add(defaultTimeControl);
+    select(0); // select the first index
   }
 }
 
