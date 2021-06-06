@@ -40,7 +40,7 @@ class MyApp extends StatelessWidget {
             iconTheme: Theme.of(context).iconTheme,
           ),
           buttonTheme: ButtonThemeData(
-            padding: EdgeInsets.symmetric(vertical: 24.0, horizontal: 24.0),
+            padding: EdgeInsets.symmetric(vertical: 16.0, horizontal: 24.0),
           ),
         ),
         initialRoute: ClockScreen.routeName,

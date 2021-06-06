@@ -15,8 +15,6 @@ class TimeControlProvider with ChangeNotifier {
   }
 
   Future<TimeControl> get selected async {
-    final SharedPreferences prefs = await _prefs;
-
     final controls = await timeControls();
     return controls[await selectedIndex];
   }
@@ -78,12 +76,12 @@ class TimeControlProvider with ChangeNotifier {
     final controls = _strToControl(strs);
 
     // create default control if it is empty
-    /*if (controls.length < 1) {
+    if (controls.length < 1) {
       await createDefaultTimeControls();
 
       // call this method recursively
       return await timeControls();
-    }*/
+    }
 
     return controls;
   }

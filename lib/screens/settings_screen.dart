@@ -47,15 +47,6 @@ class SettingScreen extends StatelessWidget {
                       if (snapshot.hasData) {
                         final timeControls = snapshot.data;
 
-                        if (timeControls.length < 1) {
-                          timeControlProvider.createDefaultTimeControls();
-                          print('array: $timeControls, loading default control');
-                          return Center(
-                            child: Text('data length is zero'),
-                            // child: CircularProgressIndicator(),
-                          );
-                        }
-
                         return ListView.separated(
                           scrollDirection: Axis.vertical,
                           itemCount: timeControls.length,
