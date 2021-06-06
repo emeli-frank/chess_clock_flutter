@@ -1,4 +1,5 @@
 import 'package:chess_clock/models/time_control.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class TimeControlScreen extends StatefulWidget {
@@ -12,6 +13,7 @@ class TimeControlScreen extends StatefulWidget {
 
 class _TimeControlScreenState extends State<TimeControlScreen> {
   final nameTextController = TextEditingController();
+  Duration duration;
 
   @override
   void dispose() {
@@ -27,6 +29,9 @@ class _TimeControlScreenState extends State<TimeControlScreen> {
     if (data != null) {
       timeControl = data['control'] as TimeControl;
       nameTextController.text = timeControl.name;
+      duration = timeControl.duration;
+    } else {
+      duration = Duration(minutes: 10);
     }
     
     return Scaffold(
@@ -34,16 +39,31 @@ class _TimeControlScreenState extends State<TimeControlScreen> {
         title: Text('Time control'),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 32.0),
         child: ListView(
           children: [
             TextFormField(
               decoration: InputDecoration(
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.cyan[800], width: 2.0),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.cyan[800], width: 2.0),
+                ),
+                labelStyle: TextStyle(
+                  color: Colors.cyan[800],
+                ),
                 border: OutlineInputBorder(),
                 labelText: 'Time control name',
                 helperText: 'E.g. Rapid | 10min',
               ),
               controller: nameTextController,
+            ),
+            CupertinoTimerPicker(
+              onTimerDurationChanged: (Duration value) {
+                duration = value;
+              },
+              initialTimerDuration: duration,
             ),
             SizedBox(height: 72.0,),
             MaterialButton(
@@ -52,7 +72,7 @@ class _TimeControlScreenState extends State<TimeControlScreen> {
               color: Theme.of(context).primaryColor,
               textColor: Colors.white,
               onPressed: () {
-                timeControl = TimeControl(name: nameTextController.text, duration: Duration(seconds: 60));
+                timeControl = TimeControl(name: nameTextController.text, duration: duration);
                 Navigator.pop(context, timeControl);
               },
             ),

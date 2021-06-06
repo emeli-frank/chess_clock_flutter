@@ -48,6 +48,12 @@ class ClockProvider with ChangeNotifier {
     }
   }
 
+  /// restarts timer with current time control
+  restartWithCurrentControl() {
+    pause();
+    reset(shouldNotifyListeners: true);
+  }
+
   /// starts time for player whose index was passed in and removed a fixed
   /// amount of time at interval while emitting their remaining time until
   /// the timer is cancelled

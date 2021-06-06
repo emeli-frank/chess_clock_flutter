@@ -19,7 +19,9 @@ class ClockActionsWidget extends StatelessWidget {
               Icons.refresh,
               color: Colors.white,
             ),
-            onPressed: null,
+            onPressed: () {
+              provider.restartWithCurrentControl();
+            },
           ),
           SizedBox(width: 24.0,),
           IconButton(
