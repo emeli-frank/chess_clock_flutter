@@ -1,48 +1,32 @@
 import 'dart:async';
 
-import 'package:chess_clock/models/time_control.dart';
 import 'package:chess_clock/providers/time_control_provider.dart';
 import 'package:flutter/foundation.dart';
 
 class ClockProvider with ChangeNotifier {
   final Duration emitInterval = Duration(milliseconds: 100);
   final List<Timer> timers = [null, null];
-  final List<StreamController<String>> controllers = [];
-  final List<Player> players = [];
+  final List<StreamController<String>> controllers = [null, null];
+  final List<Player> players = [null, null];
   final TimeControlProvider timeControlProvider;
   int currentPlayerIndex = 1;
 
   bool get isPaused => timers[0] == null && timers[1] == null;
 
   ClockProvider(this.timeControlProvider) {
+    for (int i = 0; i < 2; i++) {
+      // create stream controllers for each player
+      controllers[i] = StreamController<String>(
+        onPause: () { _stopTimer(i); },
+        onResume: () { _startTimer(i); },
+        onCancel: () { _stopTimer(i); },
+      );
+    }
+
     reset();
   }
 
-  reset() async {
-    for (int i = 0; i < 2; i++) {
-      // create stream controllers for each player
-      controllers.add(
-        StreamController<String>(
-          onPause: () { _stopTimer(i); },
-          onResume: () { _startTimer(i); },
-          onCancel: () { _stopTimer(i); },
-        )
-      );
-
-      // emit initial output string
-      (int index) {
-        timeControlProvider.selected.then((control) {
-          controllers[index].add(control.asFormattedString);
-        });
-      }(controllers.length - 1);
-    }
-
-    final timeControl = await timeControlProvider.selected;
-    players.add(Player(timeLeft: timeControl.duration));
-    players.add(Player(timeLeft: timeControl.duration));
-  }
-
-  reset2() async {
+  reset({bool shouldNotifyListeners = false}) async {
     // 2 iterations for each buttons
     for (int i = 0; i < 2; i++) {
       // emit initial output string
@@ -55,13 +39,14 @@ class ClockProvider with ChangeNotifier {
       final timeControl = await timeControlProvider.selected;
       players[i] = Player(timeLeft: timeControl.duration);
     }
-  }
 
-  /*Future<void> initClocks() async {
-    final timeControl = await timeControlProvider.selected;
-    players.add(Player(timeLeft: timeControl.duration));
-    players.add(Player(timeLeft: timeControl.duration));
-  }*/
+    currentPlayerIndex = 1;
+
+    // notifying listeners is necessary for the UI to highlight button with turn
+    if (shouldNotifyListeners) {
+      notifyListeners();
+    }
+  }
 
   /// starts time for player whose index was passed in and removed a fixed
   /// amount of time at interval while emitting their remaining time until

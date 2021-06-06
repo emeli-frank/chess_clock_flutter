@@ -142,7 +142,7 @@ class SettingScreen extends StatelessWidget {
                     color: Theme.of(context).primaryColor,
                     textColor: Colors.white,
                     onPressed: () {
-                      clockProvider.reset2();
+                      clockProvider.reset(shouldNotifyListeners: true);
                       Navigator.pop(context);
                     },
                     shape: RoundedRectangleBorder(
