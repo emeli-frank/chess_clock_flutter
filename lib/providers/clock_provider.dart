@@ -5,27 +5,28 @@ import 'package:chess_clock/providers/time_control_provider.dart';
 import 'package:flutter/foundation.dart';
 
 class ClockProvider with ChangeNotifier {
-  final Duration playerOneTime = Duration(seconds: 5 * 60); // todo:: should be supplied dynamically
-  final Duration playerTwoTime = Duration(seconds: 5 * 60); // todo:: should be supplied dynamically
   final Duration emitInterval = Duration(milliseconds: 100);
   final List<Timer> timers = [null, null];
   final List<StreamController<String>> controllers = [];
   final List<Player> players = [];
-  // final List<TimeControl> timeControls = [];
   final TimeControlProvider timeControlProvider;
   int currentPlayerIndex = 1;
 
   bool get isPaused => timers[0] == null && timers[1] == null;
 
   ClockProvider(this.timeControlProvider) {
-    // create stream controllers for each players
+    reset();
+  }
+
+  reset() async {
     for (int i = 0; i < 2; i++) {
+      // create stream controllers for each player
       controllers.add(
-          StreamController<String>(
-            onPause: () { _stopTimer(i); },
-            onResume: () { _startTimer(i); },
-            onCancel: () { _stopTimer(i); },
-          )
+        StreamController<String>(
+          onPause: () { _stopTimer(i); },
+          onResume: () { _startTimer(i); },
+          onCancel: () { _stopTimer(i); },
+        )
       );
 
       // emit initial output string
@@ -36,33 +37,48 @@ class ClockProvider with ChangeNotifier {
       }(controllers.length - 1);
     }
 
-    // players.add(Player(timeLeft: playerOneTime));
-    // players.add(Player(timeLeft: playerTwoTime));
-
-    initClocks(TimeControl(name: '', duration: Duration(minutes: 5)));
-  }
-
-  Future<void> initClocks(TimeControl control) async {
     final timeControl = await timeControlProvider.selected;
     players.add(Player(timeLeft: timeControl.duration));
     players.add(Player(timeLeft: timeControl.duration));
   }
+
+  reset2() async {
+    // 2 iterations for each buttons
+    for (int i = 0; i < 2; i++) {
+      // emit initial output string
+      (int index) {
+        timeControlProvider.selected.then((control) {
+          controllers[index].add(control.asFormattedString);
+        });
+      }(i);
+
+      final timeControl = await timeControlProvider.selected;
+      players[i] = Player(timeLeft: timeControl.duration);
+    }
+  }
+
+  /*Future<void> initClocks() async {
+    final timeControl = await timeControlProvider.selected;
+    players.add(Player(timeLeft: timeControl.duration));
+    players.add(Player(timeLeft: timeControl.duration));
+  }*/
 
   /// starts time for player whose index was passed in and removed a fixed
   /// amount of time at interval while emitting their remaining time until
   /// the timer is cancelled
   void _startTimer(int index) {
     timers[index] = Timer.periodic(emitInterval, (_) {
+      // if either player has exhausted their time, delete their timer
       if (players[0].timeLeft.inMilliseconds == 0 || players[1].timeLeft.inMilliseconds == 0) {
         if (timers[index] != null) {
           timers[index].cancel();
         }
       }
 
-      // remove time from player with turn
+      // remove time from current player
       players[currentPlayerIndex].removeTime(emitInterval);
 
-      // emit time left for current player
+      // emit remaining time left for current player
       controllers[currentPlayerIndex].add(players[currentPlayerIndex].getTimeLeft());
     });
   }

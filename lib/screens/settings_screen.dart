@@ -1,4 +1,5 @@
 import 'package:chess_clock/models/time_control.dart';
+import 'package:chess_clock/providers/clock_provider.dart';
 import 'package:chess_clock/providers/time_control_provider.dart';
 import 'package:chess_clock/screens/time_control_screen.dart';
 import 'package:flutter/material.dart';
@@ -11,6 +12,7 @@ class SettingScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     var timeControlProvider = Provider.of<TimeControlProvider>(context, listen: false);
+    var clockProvider = Provider.of<ClockProvider>(context, listen: false);
 
     return Scaffold(
       appBar: AppBar(
@@ -139,7 +141,10 @@ class SettingScreen extends StatelessWidget {
                   child: MaterialButton(
                     color: Theme.of(context).primaryColor,
                     textColor: Colors.white,
-                    onPressed: () {},
+                    onPressed: () {
+                      clockProvider.reset2();
+                      Navigator.pop(context);
+                    },
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(5.0),
                     ),
